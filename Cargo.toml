@@ -1,0 +1,12 @@
+[workspace]
+members = [
+    # Libraries
+    "src/lib/circuit",
+    "src/lib/crypto",
+
+    # SDK section
+    # "sdk/zkdpos-rs",
+]
+
+[patch.crates-io]
+ethabi = { git = "https://github.com/dvush/ethabi.git" }

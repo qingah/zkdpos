@@ -1,0 +1,15 @@
+[package]
+name = "vlog"
+version = "1.0.0"
+edition = "2018"
+authors = ["The QinGah Team <wallet@qingah.com>"]
+homepage = "https://dev.qingah.com/"
+repository = "https://github.com/qingah/zkdpos"
+license = "MIT"
+keywords = ["blockchain", "zkdpos"]
+categories = ["cryptography"]
+publish = false # This is an utility crate, not to be used by libraries.
+
+[dependencies]
+tracing = {version= "0.1.22", features = ["log"]}
+tracing-subscriber = "0.2.15"
