@@ -15,6 +15,7 @@ mod noop_op;
 mod transfer_op;
 mod transfer_to_new_op;
 mod withdraw_op;
+mod exchange_op;
 
 #[doc(hidden)]
 pub use self::close_op::CloseOp;

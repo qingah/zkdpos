@@ -6,7 +6,7 @@
 //! zkDpos operations are split into the following categories:
 //!
 //! - **transactions**: operations of zkDpos network existing purely in the L2.
-//!   Currently includes [`Transfer`], [`Withdraw`], [`ChangePubKey`] and [`ForcedExit`].
+//!   Currently includes [`Transfer`], [`Withdraw`], [`ChangePubKey`], [`Exchange`] and [`ForcedExit`].
 //!   All the transactions form an enum named [`ZkDposTx`].
 //! - **priority operations**: operations of zkDpos network which are triggered by
 //!   invoking the zkDpos smart contract method in L1. These operations are disovered by
@@ -29,6 +29,7 @@
 //! [`FullExit`]: ./priority_ops/struct.FullExit.html
 //! [`ZkDposPriorityOp`]: ./priority_ops/enum.ZkDposPriorityOp.html
 //! [`ZkDposOp`]: ./operations/enum.ZkDposOp.html
+//! [`Exchange`]: ./tx/struct.Exchange.html
 //!
 //! Aside from transactions, this crate provides definitions for other zkDpos network items, such as
 //! [`Block`] and [`Account`].
@@ -65,7 +66,7 @@ pub use self::operations::{
 };
 pub use self::priority_ops::{Deposit, FullExit, PriorityOp, ZkDposPriorityOp};
 pub use self::tokens::{Token, TokenGenesisListItem, TokenLike, TokenPrice, TxFeeTypes};
-pub use self::tx::{ForcedExit, SignedZkDposTx, Transfer, Withdraw, ZkDposTx};
+pub use self::tx::{ForcedExit, SignedZkDposTx, Transfer, Withdraw, Exchange, ZkDposTx};
 
 #[doc(hidden)]
 pub use self::{operations::CloseOp, tx::Close};

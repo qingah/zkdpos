@@ -7,6 +7,7 @@ mod primitives;
 mod transfer;
 mod withdraw;
 mod zkdpos_tx;
+mod exchange;
 
 #[cfg(test)]
 mod tests;
@@ -21,6 +22,7 @@ pub use self::{
     forced_exit::ForcedExit,
     transfer::Transfer,
     withdraw::Withdraw,
+    exchange::Exchange,
     zkdpos_tx::{AtpSignData, SignedZkDposTx, ZkDposTx},
 };
 
