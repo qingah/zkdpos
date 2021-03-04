@@ -61,12 +61,12 @@ pub use self::account::{Account, AccountUpdate, PubKeyHash};
 pub use self::block::{ExecutedOperations, ExecutedPriorityOp, ExecutedTx};
 pub use self::fee::{BatchFee, Fee, OutputFeeType};
 pub use self::operations::{
-    ChangePubKeyOp, DepositOp, ForcedExitOp, FullExitOp, TransferOp, TransferToNewOp, WithdrawOp,
+    ChangePubKeyOp, DepositOp, ForcedExitOp, FullExitOp, TransferOp, TransferToNewOp, WithdrawOp, ExchangeOp, AddLiquidityOp, RemoveLiquidityOp, 
     ZkDposOp,
 };
 pub use self::priority_ops::{Deposit, FullExit, PriorityOp, ZkDposPriorityOp};
 pub use self::tokens::{Token, TokenGenesisListItem, TokenLike, TokenPrice, TxFeeTypes};
-pub use self::tx::{ForcedExit, SignedZkDposTx, Transfer, Withdraw, Exchange, ZkDposTx};
+pub use self::tx::{ForcedExit, SignedZkDposTx, Transfer, Withdraw, Exchange, AddLiquidity, RemoveLiquidity, ZkDposTx};
 
 #[doc(hidden)]
 pub use self::{operations::CloseOp, tx::Close};

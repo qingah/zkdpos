@@ -28,6 +28,9 @@ impl CommitCost {
     pub const CHANGE_PUBKEY_COST_OFFCHAIN: u64 = 11_050;
     pub const CHANGE_PUBKEY_COST_ONCHAIN: u64 = 4_000;
     pub const TRANSFER_COST: u64 = 250;
+    pub const EXCHANGE_COST: u64 = 250;
+    pub const ADDLIQUIDITY_COST: u64 = 250;
+    pub const REMOVELIQUIDITY_COST: u64 = 250;
     pub const TRANSFER_TO_NEW_COST: u64 = 780;
     pub const FULL_EXIT_COST: u64 = 7_000;
     pub const WITHDRAW_COST: u64 = 3_500;
@@ -50,6 +53,9 @@ impl CommitCost {
                 }
             }
             ZkDposOp::Transfer(_) => Self::TRANSFER_COST,
+            ZkDposOp::Exchange(_) => Self::EXCHANGE_COST,
+            ZkDposOp::AddLiquidity(_) => Self::ADDLIQUIDITY_COST,
+            ZkDposOp::RemoveLiquidity(_) => Self::REMOVELIQUIDITY_COST, 
             ZkDposOp::TransferToNew(_) => Self::TRANSFER_TO_NEW_COST,
             ZkDposOp::FullExit(_) => Self::FULL_EXIT_COST,
             ZkDposOp::Withdraw(_) => Self::WITHDRAW_COST,
@@ -75,6 +81,9 @@ impl VerifyCost {
     pub const DEPOSIT_COST: u64 = 50;
     pub const CHANGE_PUBKEY_COST: u64 = 0;
     pub const TRANSFER_COST: u64 = 0;
+    pub const EXCHANGE_COST: u64 = 0;
+    pub const ADDLIQUIDITY_COST: u64 = 0;
+    pub const REMOVELIQUIDITY_COST: u64 = 0;
     pub const TRANSFER_TO_NEW_COST: u64 = 0;
     pub const FULL_EXIT_COST: u64 = 30_000;
     pub const WITHDRAW_COST: u64 = 48_000;
@@ -90,6 +99,9 @@ impl VerifyCost {
             ZkDposOp::Deposit(_) => Self::DEPOSIT_COST,
             ZkDposOp::ChangePubKeyOffchain(_) => Self::CHANGE_PUBKEY_COST,
             ZkDposOp::Transfer(_) => Self::TRANSFER_COST,
+            ZkDposOp::Exchange(_) => Self::EXCHANGE_COST,
+            ZkDposOp::AddLiquidity(_) => Self::ADDLIQUIDITY_COST,
+            ZkDposOp::RemoveLiquidity(_) => Self::REMOVELIQUIDITY_COST,            
             ZkDposOp::TransferToNew(_) => Self::TRANSFER_TO_NEW_COST,
             ZkDposOp::FullExit(_) => Self::FULL_EXIT_COST,
             ZkDposOp::Withdraw(_) => Self::WITHDRAW_COST,

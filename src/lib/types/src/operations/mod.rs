@@ -16,13 +16,16 @@ mod transfer_op;
 mod transfer_to_new_op;
 mod withdraw_op;
 mod exchange_op;
+mod add_liquidity_op;
+mod remove_liquidity_op;
+
 
 #[doc(hidden)]
 pub use self::close_op::CloseOp;
 pub use self::{
     change_pubkey_op::ChangePubKeyOp, deposit_op::DepositOp, forced_exit::ForcedExitOp,
-    full_exit_op::FullExitOp, noop_op::NoopOp, transfer_op::TransferOp,
-    transfer_to_new_op::TransferToNewOp, withdraw_op::WithdrawOp,
+    full_exit_op::FullExitOp, noop_op::NoopOp, transfer_op::TransferOp, exchange_op::ExchangeOp,
+    transfer_to_new_op::TransferToNewOp, withdraw_op::WithdrawOp, add_liquidity_op::AddLiquidityOp, remove_liquidity_op::RemoveLiquidityOp
 };
 use zkdpos_basic_types::AccountId;
 
@@ -44,6 +47,9 @@ pub enum ZkDposOp {
     ForcedExit(Box<ForcedExitOp>),
     /// `NoOp` operation cannot be directly created, but it's used to fill the block capacity.
     Noop(NoopOp),
+    Exchange(Box<ExchangeOp>),
+    AddLiquidity(Box<AddLiquidityOp>),
+    RemoveLiquidity(Box<RemoveLiquidityOp>),
 }
 
 impl ZkDposOp {
@@ -56,6 +62,9 @@ impl ZkDposOp {
             ZkDposOp::Withdraw(_) => WithdrawOp::CHUNKS,
             ZkDposOp::Close(_) => CloseOp::CHUNKS,
             ZkDposOp::Transfer(_) => TransferOp::CHUNKS,
+            ZkDposOp::Exchange(_) => ExchangeOp::CHUNKS,
+            ZkDposOp::AddLiquidity(_) => AddLiquidityOp::CHUNKS,
+            ZkDposOp::RemoveLiquidity(_) => RemoveLiquidityOp::CHUNKS,
             ZkDposOp::FullExit(_) => FullExitOp::CHUNKS,
             ZkDposOp::ChangePubKeyOffchain(_) => ChangePubKeyOp::CHUNKS,
             ZkDposOp::ForcedExit(_) => ForcedExitOp::CHUNKS,
@@ -71,6 +80,9 @@ impl ZkDposOp {
             ZkDposOp::Withdraw(op) => op.get_public_data(),
             ZkDposOp::Close(op) => op.get_public_data(),
             ZkDposOp::Transfer(op) => op.get_public_data(),
+            ZkDposOp::Exchange(op) => op.get_public_data(),
+            ZkDposOp::AddLiquidity(op) => op.get_public_data(),
+            ZkDposOp::RemoveLiquidity(op) => op.get_public_data(),
             ZkDposOp::FullExit(op) => op.get_public_data(),
             ZkDposOp::ChangePubKeyOffchain(op) => op.get_public_data(),
             ZkDposOp::ForcedExit(op) => op.get_public_data(),
@@ -189,6 +201,9 @@ impl ZkDposOp {
             ZkDposOp::Withdraw(op) => op.get_updated_account_ids(),
             ZkDposOp::Close(op) => op.get_updated_account_ids(),
             ZkDposOp::Transfer(op) => op.get_updated_account_ids(),
+            ZkDposOp::Exchange(op) => op.get_updated_account_ids(),
+            ZkDposOp::AddLiquidity(op) => op.get_updated_account_ids(),
+            ZkDposOp::RemoveLiquidity(op) => op.get_updated_account_ids(),
             ZkDposOp::FullExit(op) => op.get_updated_account_ids(),
             ZkDposOp::ChangePubKeyOffchain(op) => op.get_updated_account_ids(),
             ZkDposOp::ForcedExit(op) => op.get_updated_account_ids(),

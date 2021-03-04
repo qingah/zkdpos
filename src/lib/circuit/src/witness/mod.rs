@@ -12,6 +12,9 @@ pub use self::{
     forced_exit::ForcedExitWitness,
     full_exit::FullExitWitness,
     transfer::TransferWitness,
+    exchange::ExchangeWitness,
+    add_liquidity::AddLiquidityWitness,
+    remove_liquidity::RemoveLiquidityWitness,
     transfer_to_new::TransferToNewWitness,
     utils::{SigDataInput, WitnessBuilder},
     withdraw::WithdrawWitness,
@@ -24,6 +27,9 @@ pub mod forced_exit;
 pub mod full_exit;
 pub mod noop;
 pub mod transfer;
+pub mod exchange;
+pub mod add_liquidity;
+pub mod remove_liquidity;
 pub mod transfer_to_new;
 pub mod withdraw;
 

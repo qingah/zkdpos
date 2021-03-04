@@ -28,14 +28,14 @@ use zkdpos_crypto::{
 use zkdpos_state::state::CollectedFee;
 use zkdpos_types::{
     block::Block,
-    operations::{ChangePubKeyOp, CloseOp, ForcedExitOp, TransferOp, TransferToNewOp, WithdrawOp},
+    operations::{ChangePubKeyOp, CloseOp, ForcedExitOp, TransferOp, ExchangeOp, AddLiquidityOp, RemoveLiquidityOp, TransferToNewOp, WithdrawOp},
     tx::PackedPublicKey,
     AccountId, BlockNumber, ZkDposOp,
 };
 // Local deps
 use crate::witness::{
     ChangePubkeyOffChainWitness, CloseAccountWitness, DepositWitness, ForcedExitWitness,
-    FullExitWitness, TransferToNewWitness, TransferWitness, WithdrawWitness, Witness,
+    FullExitWitness, TransferToNewWitness, TransferWitness, ExchangeWitness, AddLiquidityWitness, RemoveLiquidityWitness, WithdrawWitness, Witness,
 };
 use crate::{
     account::AccountWitness,
@@ -522,6 +522,48 @@ impl SigDataInput {
         )
     }
 
+    pub fn from_exchange_op(exchange_op: &ExchangeOp) -> Result<Self, anyhow::Error> {
+        let sign_packed = exchange_op
+            .tx
+            .signature
+            .signature
+            .serialize_packed()
+            .expect("signature serialize");
+        SigDataInput::new(
+            &sign_packed,
+            &exchange_op.tx.get_bytes(),
+            &exchange_op.tx.signature.pub_key,
+        )
+    }
+
+    pub fn from_add_liquidity_op(add_liquidity_op: &AddLiquidityOp) -> Result<Self, anyhow::Error> {
+        let sign_packed = add_liquidity_op
+            .tx
+            .signature
+            .signature
+            .serialize_packed()
+            .expect("signature serialize");
+        SigDataInput::new(
+            &sign_packed,
+            &add_liquidity_op.tx.get_bytes(),
+            &add_liquidity_op.tx.signature.pub_key,
+        )
+    }
+
+    pub fn from_remove_liquidity_op(remove_liquidity_op: &RemoveLiquidityOp) -> Result<Self, anyhow::Error> {
+        let sign_packed = remove_liquidity_op
+            .tx
+            .signature
+            .signature
+            .serialize_packed()
+            .expect("signature serialize");
+        SigDataInput::new(
+            &sign_packed,
+            &remove_liquidity_op.tx.get_bytes(),
+            &remove_liquidity_op.tx.signature.pub_key,
+        )
+    }
+
     pub fn from_transfer_to_new_op(transfer_op: &TransferToNewOp) -> Result<Self, anyhow::Error> {
         let sign_packed = transfer_op
             .tx
@@ -680,6 +722,51 @@ pub fn build_block_witness<'a>(
                 });
                 pub_data.extend(transfer_witness.get_pubdata());
                 offset_commitment.extend(transfer_witness.get_offset_commitment_data())
+            }
+            ZkDposOp::Exchange(exchange) => {
+                let exchange_witness =
+                    ExchangeWitness::apply_tx(&mut witness_accum.account_tree, &exchange);
+
+                let input = SigDataInput::from_exchange_op(&exchange)?;
+                let exchange_operations = exchange_witness.calculate_operations(input);
+
+                operations.extend(exchange_operations);
+                fees.push(CollectedFee {
+                    token: exchange.tx.token,
+                    amount: exchange.tx.fee,
+                });
+                pub_data.extend(exchange_witness.get_pubdata());
+                offset_commitment.extend(exchange_witness.get_offset_commitment_data())
+            }
+            ZkDposOp::AddLiquidity(add_liquidity) => {
+                let exchange_witness =
+                    AddLiquidityWitness::apply_tx(&mut witness_accum.account_tree, &add_liquidity);
+
+                let input = SigDataInput::from_add_liquidity_op(&add_liquidity)?;
+                let exchange_operations = exchange_witness.calculate_operations(input);
+
+                operations.extend(exchange_operations);
+                fees.push(CollectedFee {
+                    token: add_liquidity.tx.token,
+                    amount: add_liquidity.tx.fee,
+                });
+                pub_data.extend(exchange_witness.get_pubdata());
+                offset_commitment.extend(exchange_witness.get_offset_commitment_data())
+            }
+            ZkDposOp::RemoveLiquidity(remove_liquidity) => {
+                let exchange_witness =
+                    RemoveLiquidityWitness::apply_tx(&mut witness_accum.account_tree, &remove_liquidity);
+
+                let input = SigDataInput::from_remove_liquidity_op(&remove_liquidity)?;
+                let exchange_operations = exchange_witness.calculate_operations(input);
+
+                operations.extend(exchange_operations);
+                fees.push(CollectedFee {
+                    token: remove_liquidity.tx.token,
+                    amount: remove_liquidity.tx.fee,
+                });
+                pub_data.extend(exchange_witness.get_pubdata());
+                offset_commitment.extend(exchange_witness.get_offset_commitment_data())
             }
             ZkDposOp::TransferToNew(transfer_to_new) => {
                 let transfer_to_new_witness = TransferToNewWitness::apply_tx(

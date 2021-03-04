@@ -8,6 +8,8 @@ mod transfer;
 mod withdraw;
 mod zkdpos_tx;
 mod exchange;
+mod add_liquidity;
+mod remove_liquidity;
 
 #[cfg(test)]
 mod tests;
@@ -23,6 +25,8 @@ pub use self::{
     transfer::Transfer,
     withdraw::Withdraw,
     exchange::Exchange,
+    add_liquidity::AddLiquidity,
+    remove_liquidity::RemoveLiquidity,
     zkdpos_tx::{AtpSignData, SignedZkDposTx, ZkDposTx},
 };
 
