@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 use zkdpos_crypto::{params, Fr};
 use zkdpos_types::{
     helpers::reverse_updates,
-    operations::{TransferOp, TransferToNewOp, ZkDposOp},
+    operations::{TransferOp, TransferToNewOp, ExchangeOp, ZkDposOp},
     Account, AccountId, AccountMap, AccountTree, AccountUpdate, AccountUpdates, Address,
     BlockNumber, SignedZkDposTx, TokenId, ZkDposPriorityOp, ZkDposTx,
 };
@@ -47,6 +47,20 @@ impl TransferOutcome {
         match self {
             Self::Transfer(transfer) => transfer.into(),
             Self::TransferToNew(transfer) => transfer.into(),
+        }
+    }
+}
+
+/// Helper enum to unify Exchange operations.
+#[derive(Debug)]
+pub enum ExchangeOutcome {
+    Exchange(ExchangeOp),
+}
+
+impl ExchangeOutcome {
+    pub fn into_franklin_op(self) -> ZkDposOp {
+        match self {
+            Self::Exchange(exchange) => exchange.into(),
         }
     }
 }
@@ -260,6 +274,7 @@ impl ZkDposState {
     pub fn execute_tx(&mut self, tx: ZkDposTx) -> Result<OpSuccess, Error> {
         match tx {
             ZkDposTx::Transfer(tx) => self.apply_tx(*tx),
+            ZkDposTx::Exchange(tx) => self.apply_tx(*tx),
             ZkDposTx::Withdraw(tx) => self.apply_tx(*tx),
             ZkDposTx::Close(tx) => self.apply_tx(*tx),
             ZkDposTx::ChangePubKey(tx) => self.apply_tx(*tx),
@@ -344,6 +359,7 @@ impl ZkDposState {
     pub fn zkdpos_tx_to_zkdpos_op(&self, tx: ZkDposTx) -> Result<ZkDposOp, anyhow::Error> {
         match tx {
             ZkDposTx::Transfer(tx) => self.create_op(*tx).map(TransferOutcome::into_franklin_op),
+            ZkDposTx::Exchange(tx) => self.create_op(*tx).map(ExchangeOutcome::into_franklin_op),
             ZkDposTx::Withdraw(tx) => self.create_op(*tx).map(Into::into),
             ZkDposTx::ChangePubKey(tx) => self.create_op(*tx).map(Into::into),
             ZkDposTx::Close(_) => anyhow::bail!("Close op is disabled"),

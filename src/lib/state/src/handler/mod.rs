@@ -8,6 +8,9 @@ mod forced_exit;
 mod full_exit;
 mod transfer;
 mod withdraw;
+mod exchange;
+mod add_liquidity;
+mod remove_liquidity;
 
 /// TxHandler trait encapsulates the logic of each individual transaction
 /// handling. By transactions we assume both zkDpos network transactions,

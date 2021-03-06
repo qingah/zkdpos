@@ -269,6 +269,12 @@ impl From<TransferOp> for ZkDposOp {
     }
 }
 
+impl From<ExchangeOp> for ZkDposOp {
+    fn from(op: ExchangeOp) -> Self {
+        Self::Exchange(Box::new(op))
+    }
+}
+
 impl From<FullExitOp> for ZkDposOp {
     fn from(op: FullExitOp) -> Self {
         Self::FullExit(Box::new(op))

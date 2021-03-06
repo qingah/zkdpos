@@ -6,7 +6,7 @@ use zkdpos_basic_types::{AccountId, Address};
 
 use crate::{
     operations::ChangePubKeyOp,
-    tx::{ChangePubKey, Close, ForcedExit, Transfer, TxAtpSignature, TxHash, Withdraw},
+    tx::{ChangePubKey, Close, ForcedExit, Transfer, TxAtpSignature, TxHash, Withdraw, Exchange},
     utils::deserialize_atp_message,
     CloseOp, ForcedExitOp, Nonce, Token, TokenId, TokenLike, TransferOp, TxFeeTypes, WithdrawOp,
 };
@@ -36,6 +36,7 @@ pub struct SignedZkDposTx {
 pub enum ZkDposTx {
     Transfer(Box<Transfer>),
     Withdraw(Box<Withdraw>),
+    Exchange(Box<Exchange>),
     #[doc(hidden)]
     Close(Box<Close>),
     ChangePubKey(Box<ChangePubKey>),
@@ -94,6 +95,7 @@ impl ZkDposTx {
     pub fn hash(&self) -> TxHash {
         let bytes = match self {
             ZkDposTx::Transfer(tx) => tx.get_bytes(),
+            ZkDposTx::Exchange(tx) => tx.get_bytes(),
             ZkDposTx::Withdraw(tx) => tx.get_bytes(),
             ZkDposTx::Close(tx) => tx.get_bytes(),
             ZkDposTx::ChangePubKey(tx) => tx.get_bytes(),
@@ -110,6 +112,7 @@ impl ZkDposTx {
     pub fn account(&self) -> Address {
         match self {
             ZkDposTx::Transfer(tx) => tx.from,
+            ZkDposTx::Exchange(tx) => tx.from,
             ZkDposTx::Withdraw(tx) => tx.from,
             ZkDposTx::Close(tx) => tx.account,
             ZkDposTx::ChangePubKey(tx) => tx.account,
@@ -120,6 +123,7 @@ impl ZkDposTx {
     pub fn account_id(&self) -> anyhow::Result<AccountId> {
         match self {
             ZkDposTx::Transfer(tx) => Ok(tx.account_id),
+            ZkDposTx::Exchange(tx) => Ok(tx.account_id),
             ZkDposTx::Withdraw(tx) => Ok(tx.account_id),
             ZkDposTx::ChangePubKey(tx) => Ok(tx.account_id),
             ZkDposTx::ForcedExit(tx) => Ok(tx.initiator_account_id),
@@ -131,6 +135,7 @@ impl ZkDposTx {
     pub fn nonce(&self) -> Nonce {
         match self {
             ZkDposTx::Transfer(tx) => tx.nonce,
+            ZkDposTx::Exchange(tx) => tx.nonce,
             ZkDposTx::Withdraw(tx) => tx.nonce,
             ZkDposTx::Close(tx) => tx.nonce,
             ZkDposTx::ChangePubKey(tx) => tx.nonce,
@@ -145,6 +150,7 @@ impl ZkDposTx {
     pub fn token_id(&self) -> TokenId {
         match self {
             ZkDposTx::Transfer(tx) => tx.token,
+            ZkDposTx::Exchange(tx) => tx.token,
             ZkDposTx::Withdraw(tx) => tx.token,
             ZkDposTx::Close(_) => ATP_TOKEN_ID,
             ZkDposTx::ChangePubKey(tx) => tx.fee_token,
@@ -159,6 +165,7 @@ impl ZkDposTx {
     pub fn check_correctness(&mut self) -> bool {
         match self {
             ZkDposTx::Transfer(tx) => tx.check_correctness(),
+            ZkDposTx::Exchange(tx) => tx.check_correctness(),
             ZkDposTx::Withdraw(tx) => tx.check_correctness(),
             ZkDposTx::Close(tx) => tx.check_correctness(),
             ZkDposTx::ChangePubKey(tx) => tx.check_correctness(),
@@ -225,6 +232,7 @@ impl ZkDposTx {
     pub fn get_bytes(&self) -> Vec<u8> {
         match self {
             ZkDposTx::Transfer(tx) => tx.get_bytes(),
+            ZkDposTx::Exchange(tx) => tx.get_bytes(),
             ZkDposTx::Withdraw(tx) => tx.get_bytes(),
             ZkDposTx::Close(tx) => tx.get_bytes(),
             ZkDposTx::ChangePubKey(tx) => tx.get_bytes(),
@@ -238,6 +246,7 @@ impl ZkDposTx {
     pub fn min_chunks(&self) -> usize {
         match self {
             ZkDposTx::Transfer(_) => TransferOp::CHUNKS,
+            ZkDposTx::Exchange(_) => TransferOp::CHUNKS,
             ZkDposTx::Withdraw(_) => WithdrawOp::CHUNKS,
             ZkDposTx::Close(_) => CloseOp::CHUNKS,
             ZkDposTx::ChangePubKey(_) => ChangePubKeyOp::CHUNKS,
@@ -307,6 +316,7 @@ impl ZkDposTx {
     pub fn valid_from(&self) -> u64 {
         match self {
             ZkDposTx::Transfer(tx) => tx.time_range.unwrap_or_default().valid_from,
+            ZkDposTx::Exchange(tx) => tx.time_range.unwrap_or_default().valid_from,
             ZkDposTx::Withdraw(tx) => tx.time_range.unwrap_or_default().valid_from,
             ZkDposTx::ChangePubKey(tx) => tx.time_range.unwrap_or_default().valid_from,
             ZkDposTx::ForcedExit(tx) => tx.time_range.valid_from,
