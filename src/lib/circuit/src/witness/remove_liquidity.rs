@@ -63,8 +63,8 @@ impl Witness for RemoveLiquidityWitness<Bn256> {
     fn apply_tx(tree: &mut CircuitAccountTree, remove_liquidity: &RemoveLiquidityOp) -> Self {
         let time_range = remove_liquidity.tx.time_range.unwrap_or_default();
         let remove_liquidity_data = RemoveLiquidityData {
-            amount: remove_liquidity.tx.amount.to_u128().unwrap(),
-            fee: remove_liquidity.tx.fee.to_u128().unwrap(),
+            amount: remove_liquidity.tx.amount_a_desired.to_u128().unwrap(),
+            fee: remove_liquidity.tx.fee_a.to_u128().unwrap(),
             token: *remove_liquidity.tx.token as u32,
             from_account_address: *remove_liquidity.from,
             to_account_address: *remove_liquidity.to,

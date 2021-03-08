@@ -2,7 +2,7 @@ use crate::{
     helpers::{pack_fee_amount, pack_token_amount, unpack_fee_amount, unpack_token_amount},
     AddLiquidity,
 };
-use crate::{AccountId, Address, Nonce, TokenId};
+use crate::{AccountId, Address, Nonce, LiquidityId, TokenId};
 use anyhow::{ensure, format_err};
 use serde::{Deserialize, Serialize};
 use zkdpos_crypto::params::{
@@ -27,10 +27,13 @@ impl AddLiquidityOp {
         let mut data = Vec::new();
         data.push(Self::OP_CODE); // opcode
         data.extend_from_slice(&self.from.to_be_bytes());
-        data.extend_from_slice(&self.tx.token.to_be_bytes());
         data.extend_from_slice(&self.to.to_be_bytes());
-        data.extend_from_slice(&pack_token_amount(&self.tx.amount));
-        data.extend_from_slice(&pack_fee_amount(&self.tx.fee));
+        data.extend_from_slice(&pack_token_amount(&self.tx.amount_a_desired));
+        data.extend_from_slice(&pack_token_amount(&self.tx.amount_b_desired));
+        data.extend_from_slice(&pack_token_amount(&self.tx.amount_a_min));
+        data.extend_from_slice(&pack_token_amount(&self.tx.amount_b_min));
+        data.extend_from_slice(&pack_fee_amount(&self.tx.fee_a));
+        data.extend_from_slice(&pack_fee_amount(&self.tx.fee_b));
         data.resize(Self::CHUNKS * CHUNK_BYTES, 0x00);
         data
     }
@@ -48,19 +51,46 @@ impl AddLiquidityOp {
         let fee_offset =
             amount_offset + (AMOUNT_EXPONENT_BIT_WIDTH + AMOUNT_MANTISSA_BIT_WIDTH) / 8;
 
-        let from_address = Address::zero(); // From pubdata its unknown
+        // let from_address = Address::zero(); // From pubdata its unknown
         let to_address = Address::zero(); // From pubdata its unknown
-        let token = u16::from_bytes(&bytes[token_id_offset..token_id_offset + TOKEN_BIT_WIDTH / 8])
-            .ok_or_else(|| format_err!("Cant get token id from remove liquidity pubdata"))?;
-        let amount = unpack_token_amount(
+        let liquidity_id =
+            u16::from_bytes(&bytes[token_id_offset..token_id_offset + TOKEN_BIT_WIDTH / 8])
+                .ok_or_else(|| {
+                    format_err!("Cant get liquidity id from remove liquidity pubdata")
+                })?;
+        let token =
+            u16::from_bytes(&bytes[token_id_offset..token_id_offset + TOKEN_BIT_WIDTH / 8])
+                .ok_or_else(|| {
+                    format_err!("Cant get liquidity id from remove liquidity pubdata")
+                })?;
+        let amount_a_desired = unpack_token_amount(
             &bytes[amount_offset
                 ..amount_offset + (AMOUNT_EXPONENT_BIT_WIDTH + AMOUNT_MANTISSA_BIT_WIDTH) / 8],
         )
-        .ok_or_else(|| format_err!("Cant get amount from remove liquidity pubdata"))?;
-        let fee = unpack_fee_amount(
+        .ok_or_else(|| format_err!("Cant get amount_a_desired from remove liquidity pubdata"))?;
+        let amount_b_desired = unpack_token_amount(
+            &bytes[amount_offset
+                ..amount_offset + (AMOUNT_EXPONENT_BIT_WIDTH + AMOUNT_MANTISSA_BIT_WIDTH) / 8],
+        )
+        .ok_or_else(|| format_err!("Cant get amount_b_desired from remove liquidity pubdata"))?;
+        let amount_a_min = unpack_token_amount(
+            &bytes[amount_offset
+                ..amount_offset + (AMOUNT_EXPONENT_BIT_WIDTH + AMOUNT_MANTISSA_BIT_WIDTH) / 8],
+        )
+        .ok_or_else(|| format_err!("Cant get amount_a_min from remove liquidity pubdata"))?;
+        let amount_b_min = unpack_token_amount(
+            &bytes[amount_offset
+                ..amount_offset + (AMOUNT_EXPONENT_BIT_WIDTH + AMOUNT_MANTISSA_BIT_WIDTH) / 8],
+        )
+        .ok_or_else(|| format_err!("Cant get amount_b_min from remove liquidity pubdata"))?;
+        let fee_a = unpack_fee_amount(
             &bytes[fee_offset..fee_offset + (FEE_EXPONENT_BIT_WIDTH + FEE_MANTISSA_BIT_WIDTH) / 8],
         )
-        .ok_or_else(|| format_err!("Cant get fee from remove liquidity pubdata"))?;
+        .ok_or_else(|| format_err!("Cant get fee a from remove liquidity pubdata"))?;
+        let fee_b = unpack_fee_amount(
+            &bytes[fee_offset..fee_offset + (FEE_EXPONENT_BIT_WIDTH + FEE_MANTISSA_BIT_WIDTH) / 8],
+        )
+        .ok_or_else(|| format_err!("Cant get fee b from remove liquidity pubdata"))?;
         let nonce = 0; // It is unknown from pubdata
         let from_id = u32::from_bytes(&bytes[from_offset..from_offset + ACCOUNT_ID_BIT_WIDTH / 8])
             .ok_or_else(|| format_err!("Cant get from account id from remove liquidity pubdata"))?;
@@ -71,11 +101,15 @@ impl AddLiquidityOp {
         Ok(Self {
             tx: AddLiquidity::new(
                 AccountId(from_id),
-                from_address,
+                LiquidityId(liquidity_id),
                 to_address,
+                amount_a_desired,
+                amount_b_desired,
+                amount_a_min,
+                amount_b_min,
                 TokenId(token),
-                amount,
-                fee,
+                fee_a,
+                fee_b,
                 Nonce(nonce),
                 time_range,
                 None,

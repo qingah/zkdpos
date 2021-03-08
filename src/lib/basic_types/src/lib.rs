@@ -13,6 +13,12 @@ use std::str::FromStr;
 pub use web3::types::{Address, Log, TransactionReceipt, H160, H256, U128, U256};
 
 basic_type!(
+    /// Unique identifier of the Liquidity in the zkDpos network.
+    LiquidityId,
+    u16
+);
+
+basic_type!(
     /// Unique identifier of the token in the zkDpos network.
     TokenId,
     u16

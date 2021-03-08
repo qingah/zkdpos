@@ -22,8 +22,9 @@ impl TxHandler<RemoveLiquidity> for ZkDposState {
             tx.to != Address::zero(),
             "RemoveLiquidity to Account with address 0 is not allowed"
         );
-        let (from, from_account) = self
-            .get_account_by_address(&tx.from)
+        let from = tx.account_id;
+        let from_account = self
+            .get_account(tx.account_id)
             .ok_or_else(|| format_err!("From account does not exist"))?;
         ensure!(
             from_account.pub_key_hash != PubKeyHash::default(),
@@ -76,11 +77,11 @@ impl TxHandler<RemoveLiquidity> for ZkDposState {
 
         ensure!(op.tx.nonce == from_old_nonce, "Nonce mismatch");
         ensure!(
-            from_old_balance >= &op.tx.amount + &op.tx.fee,
+            from_old_balance >= &op.tx.amount_a_desired + &op.tx.fee_a,
             "Not enough balance"
         );
 
-        from_account.sub_balance(op.tx.token, &(&op.tx.amount + &op.tx.fee));
+        from_account.sub_balance(op.tx.token, &(&op.tx.amount_a_desired + &op.tx.fee_a));
         *from_account.nonce += 1;
 
         let from_new_balance = from_account.get_balance(op.tx.token);
@@ -89,7 +90,7 @@ impl TxHandler<RemoveLiquidity> for ZkDposState {
         let to_old_balance = to_account.get_balance(op.tx.token);
         let to_account_nonce = to_account.nonce;
 
-        to_account.add_balance(op.tx.token, &op.tx.amount);
+        to_account.add_balance(op.tx.token, &op.tx.amount_b_desired);
 
         let to_new_balance = to_account.get_balance(op.tx.token);
 
@@ -116,7 +117,7 @@ impl TxHandler<RemoveLiquidity> for ZkDposState {
 
         let fee = CollectedFee {
             token: op.tx.token,
-            amount: op.tx.fee.clone(),
+            amount: op.tx.fee_a.clone(),
         };
 
         metrics::histogram!("state.remove_liquidity", start.elapsed());

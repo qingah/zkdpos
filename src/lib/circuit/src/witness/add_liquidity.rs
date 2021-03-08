@@ -63,8 +63,8 @@ impl Witness for AddLiquidityWitness<Bn256> {
     fn apply_tx(tree: &mut CircuitAccountTree, add_liquidity: &AddLiquidityOp) -> Self {
         let time_range = add_liquidity.tx.time_range.unwrap_or_default();
         let add_liquidity_data = AddLiquidityData {
-            amount: add_liquidity.tx.amount.to_u128().unwrap(),
-            fee: add_liquidity.tx.fee.to_u128().unwrap(),
+            amount: add_liquidity.tx.amount_a_desired.to_u128().unwrap(),
+            fee: add_liquidity.tx.fee_a.to_u128().unwrap(),
             token: *add_liquidity.tx.token as u32,
             from_account_address: *add_liquidity.from,
             to_account_address: *add_liquidity.to,

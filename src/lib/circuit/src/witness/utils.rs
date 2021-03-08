@@ -748,7 +748,7 @@ pub fn build_block_witness<'a>(
                 operations.extend(exchange_operations);
                 fees.push(CollectedFee {
                     token: add_liquidity.tx.token,
-                    amount: add_liquidity.tx.fee,
+                    amount: add_liquidity.tx.fee_a,
                 });
                 pub_data.extend(exchange_witness.get_pubdata());
                 offset_commitment.extend(exchange_witness.get_offset_commitment_data())
@@ -763,7 +763,7 @@ pub fn build_block_witness<'a>(
                 operations.extend(exchange_operations);
                 fees.push(CollectedFee {
                     token: remove_liquidity.tx.token,
-                    amount: remove_liquidity.tx.fee,
+                    amount: remove_liquidity.tx.fee_a,
                 });
                 pub_data.extend(exchange_witness.get_pubdata());
                 offset_commitment.extend(exchange_witness.get_offset_commitment_data())
