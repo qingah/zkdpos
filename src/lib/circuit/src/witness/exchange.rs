@@ -63,9 +63,9 @@ impl Witness for ExchangeWitness<Bn256> {
     fn apply_tx(tree: &mut CircuitAccountTree, exchange: &ExchangeOp) -> Self {
         let time_range = exchange.tx.time_range.unwrap_or_default();
         let exchange_data = ExchangeData {
-            amount: exchange.tx.amount.to_u128().unwrap(),
+            amount: exchange.tx.amount_a.to_u128().unwrap(),
             fee: exchange.tx.fee.to_u128().unwrap(),
-            token: *exchange.tx.token as u32,
+            token: *exchange.tx.token_a as u32,
             from_account_address: *exchange.from,
             to_account_address: *exchange.to,
             valid_from: time_range.valid_from,

@@ -27,9 +27,11 @@ impl ExchangeOp {
         let mut data = Vec::new();
         data.push(Self::OP_CODE); // opcode
         data.extend_from_slice(&self.from.to_be_bytes());
-        data.extend_from_slice(&self.tx.token.to_be_bytes());
-        data.extend_from_slice(&self.to.to_be_bytes());
-        data.extend_from_slice(&pack_token_amount(&self.tx.amount));
+        data.extend_from_slice(&self.tx.token_a.to_be_bytes());
+        data.extend_from_slice(&self.tx.token_b.to_be_bytes());
+        data.extend_from_slice(&pack_token_amount(&self.tx.amount_a));
+        data.extend_from_slice(&pack_token_amount(&self.tx.amount_b));
+        data.extend_from_slice(&pack_fee_amount(&self.tx.price));
         data.extend_from_slice(&pack_fee_amount(&self.tx.fee));
         data.resize(Self::CHUNKS * CHUNK_BYTES, 0x00);
         data
@@ -49,14 +51,23 @@ impl ExchangeOp {
             amount_offset + (AMOUNT_EXPONENT_BIT_WIDTH + AMOUNT_MANTISSA_BIT_WIDTH) / 8;
 
         let from_address = Address::zero(); // From pubdata its unknown
-        let to_address = Address::zero(); // From pubdata its unknown
-        let token = u16::from_bytes(&bytes[token_id_offset..token_id_offset + TOKEN_BIT_WIDTH / 8])
+        let token_a = u16::from_bytes(&bytes[token_id_offset..token_id_offset + TOKEN_BIT_WIDTH / 8])
             .ok_or_else(|| format_err!("Cant get token id from exchange pubdata"))?;
-        let amount = unpack_token_amount(
+        let token_b = u16::from_bytes(&bytes[token_id_offset..token_id_offset + TOKEN_BIT_WIDTH / 8])
+            .ok_or_else(|| format_err!("Cant get token id from exchange pubdata"))?;
+        let amount_a = unpack_token_amount(
+            &bytes[amount_offset
+                ..amount_offset + (AMOUNT_EXPONENT_BIT_WIDTH + AMOUNT_MANTISSA_BIT_WIDTH) / 8],
+        ).ok_or_else(|| format_err!("Cant get amount from exchange pubdata"))?;
+        let amount_b = unpack_token_amount(
             &bytes[amount_offset
                 ..amount_offset + (AMOUNT_EXPONENT_BIT_WIDTH + AMOUNT_MANTISSA_BIT_WIDTH) / 8],
         )
         .ok_or_else(|| format_err!("Cant get amount from exchange pubdata"))?;
+        let price = unpack_fee_amount(
+            &bytes[fee_offset..fee_offset + (FEE_EXPONENT_BIT_WIDTH + FEE_MANTISSA_BIT_WIDTH) / 8],
+        )
+        .ok_or_else(|| format_err!("Cant get price from exchange pubdata"))?;
         let fee = unpack_fee_amount(
             &bytes[fee_offset..fee_offset + (FEE_EXPONENT_BIT_WIDTH + FEE_MANTISSA_BIT_WIDTH) / 8],
         )
@@ -72,9 +83,11 @@ impl ExchangeOp {
             tx: Exchange::new(
                 AccountId(from_id),
                 from_address,
-                to_address,
-                TokenId(token),
-                amount,
+                TokenId(token_a),
+                TokenId(token_b),
+                amount_a,
+                amount_b,
+                price,
                 fee,
                 Nonce(nonce),
                 time_range,

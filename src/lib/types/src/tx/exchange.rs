@@ -8,7 +8,6 @@ use crate::{
 use num::BigUint;
 
 use crate::account::PubKeyHash;
-use crate::utils::alaya_sign_message_part;
 use crate::Engine;
 use serde::{Deserialize, Serialize};
 use zkdpos_basic_types::Address;
@@ -26,13 +25,19 @@ pub struct Exchange {
     pub account_id: AccountId,
     /// Address of account to exchange funds from.
     pub from: Address,
-    /// Address of account to exchange funds to.
-    pub to: Address,
     /// Type of token for exchange. Also represents the token in which fee will be paid.
-    pub token: TokenId,
-    /// Amount of funds to exchange.
+    pub token_a: TokenId,
+    /// Type of token for exchange. Also represents the token in which fee will be paid.
+    pub token_b: TokenId,
+    /// Amount A of funds to exchange.
     #[serde(with = "BigUintSerdeAsRadix10Str")]
-    pub amount: BigUint,
+    pub amount_a: BigUint,
+    /// Amount B of funds to exchange.
+    #[serde(with = "BigUintSerdeAsRadix10Str")]
+    pub amount_b: BigUint,
+    /// Price for the transaction.
+    #[serde(with = "BigUintSerdeAsRadix10Str")]
+    pub price: BigUint,
     /// Fee for the transaction.
     #[serde(with = "BigUintSerdeAsRadix10Str")]
     pub fee: BigUint,
@@ -60,9 +65,11 @@ impl Exchange {
     pub fn new(
         account_id: AccountId,
         from: Address,
-        to: Address,
-        token: TokenId,
-        amount: BigUint,
+        token_a: TokenId,
+        token_b: TokenId,
+        amount_a: BigUint,
+        amount_b: BigUint,
+        price: BigUint,
         fee: BigUint,
         nonce: Nonce,
         time_range: TimeRange,
@@ -71,9 +78,11 @@ impl Exchange {
         let mut tx = Self {
             account_id,
             from,
-            to,
-            token,
-            amount,
+            token_a,
+            token_b,
+            amount_a,
+            amount_b,
+            price,
             fee,
             nonce,
             time_range: Some(time_range),
@@ -92,16 +101,18 @@ impl Exchange {
     pub fn new_signed(
         account_id: AccountId,
         from: Address,
-        to: Address,
-        token: TokenId,
-        amount: BigUint,
+        token_a: TokenId,
+        token_b: TokenId,
+        amount_a: BigUint,
+        amount_b: BigUint,
+        price: BigUint,
         fee: BigUint,
         nonce: Nonce,
         time_range: TimeRange,
         private_key: &PrivateKey<Engine>,
     ) -> Result<Self, anyhow::Error> {
         let mut tx = Self::new(
-            account_id, from, to, token, amount, fee, nonce, time_range, None,
+            account_id, from, token_a, token_b, amount_a, amount_b, price, fee, nonce, time_range, None,
         );
         tx.signature = TxSignature::sign_musig(private_key, &tx.get_bytes());
         if !tx.check_correctness() {
@@ -116,9 +127,11 @@ impl Exchange {
         out.extend_from_slice(&[Self::TX_TYPE]);
         out.extend_from_slice(&self.account_id.to_be_bytes());
         out.extend_from_slice(&self.from.as_bytes());
-        out.extend_from_slice(&self.to.as_bytes());
-        out.extend_from_slice(&self.token.to_be_bytes());
-        out.extend_from_slice(&pack_token_amount(&self.amount));
+        out.extend_from_slice(&self.token_a.to_be_bytes());
+        out.extend_from_slice(&self.token_b.to_be_bytes());
+        out.extend_from_slice(&pack_token_amount(&self.amount_a));
+        out.extend_from_slice(&pack_token_amount(&self.amount_b));
+        out.extend_from_slice(&pack_fee_amount(&self.price));
         out.extend_from_slice(&pack_fee_amount(&self.fee));
         out.extend_from_slice(&self.nonce.to_be_bytes());
         if let Some(time_range) = &self.time_range {
@@ -136,13 +149,16 @@ impl Exchange {
     /// - exchange recipient must not be `Adddress::zero()`.
     /// - zkDpos signature must correspond to the PubKeyHash of the account.
     pub fn check_correctness(&mut self) -> bool {
-        let mut valid = self.amount <= BigUint::from(u128::max_value())
+        let mut valid = self.amount_a <= BigUint::from(u128::max_value())
+            && self.amount_b <= BigUint::from(u128::max_value())
             && self.fee <= BigUint::from(u128::max_value())
-            && is_token_amount_packable(&self.amount)
+            && is_token_amount_packable(&self.amount_a)
+            && is_token_amount_packable(&self.amount_b)
             && is_fee_amount_packable(&self.fee)
             && self.account_id <= max_account_id()
-            && self.token <= max_token_id()
-            && self.to != Address::zero()
+            && self.token_a <= max_token_id()
+            && self.token_b <= max_token_id()
+            // && self.to != Address::zero()
             && self
                 .time_range
                 .map(|r| r.check_correctness())
@@ -170,13 +186,20 @@ impl Exchange {
     /// The only difference is the missing `nonce` since it's added at the end of the transactions
     /// batch message.
     pub fn get_alaya_sign_message_part(&self, token_symbol: &str, decimals: u8) -> String {
-        alaya_sign_message_part(
-            "Transfer",
-            token_symbol,
-            decimals,
-            &self.amount,
-            &self.fee,
-            &self.to,
+        format!(
+            "Exchange {token_a} {amount_a} {token_b} {amount_b}\n\
+            Nonce: {price}\n\
+            Nonce: {nonce}\n\
+            Fee: {fee} {token_a}\n\
+            Account Id: {account_id}",
+            token_a = token_symbol,
+            token_b = token_symbol,
+            amount_a = format_units(&self.amount_a, decimals),
+            amount_b = format_units(&self.amount_b, decimals),
+            nonce = *self.nonce,
+            price = format_units(&self.price, decimals),
+            fee = format_units(&self.fee, decimals),
+            account_id = *self.account_id,
         )
     }
 
@@ -194,15 +217,17 @@ impl Exchange {
     /// Needed for backwards compatibility.
     pub fn get_old_alaya_sign_message(&self, token_symbol: &str, decimals: u8) -> String {
         format!(
-            "Transfer {amount} {token}\n\
-            To: {to:?}\n\
+            "Exchange {token_a} {amount_a} {token_b} {amount_b}\n\
+            Nonce: {price}\n\
             Nonce: {nonce}\n\
-            Fee: {fee} {token}\n\
+            Fee: {fee} {token_a}\n\
             Account Id: {account_id}",
-            amount = format_units(&self.amount, decimals),
-            token = token_symbol,
-            to = self.to,
+            token_a = token_symbol,
+            token_b = token_symbol,
+            amount_a = format_units(&self.amount_a, decimals),
+            amount_b = format_units(&self.amount_b, decimals),
             nonce = *self.nonce,
+            price = format_units(&self.price, decimals),
             fee = format_units(&self.fee, decimals),
             account_id = *self.account_id,
         )

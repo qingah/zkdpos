@@ -150,7 +150,7 @@ impl ZkDposTx {
     pub fn token_id(&self) -> TokenId {
         match self {
             ZkDposTx::Transfer(tx) => tx.token,
-            ZkDposTx::Exchange(tx) => tx.token,
+            ZkDposTx::Exchange(tx) => tx.token_a,
             ZkDposTx::Withdraw(tx) => tx.token,
             ZkDposTx::Close(_) => ATP_TOKEN_ID,
             ZkDposTx::ChangePubKey(tx) => tx.fee_token,

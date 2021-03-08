@@ -2,7 +2,7 @@ use anyhow::{ensure, format_err};
 use std::time::Instant;
 use zkdpos_crypto::params::{self, max_account_id};
 use zkdpos_types::{
-    AccountUpdate, AccountUpdates, Address, PubKeyHash, Exchange, ExchangeOp,
+    AccountUpdate, AccountUpdates, PubKeyHash, Exchange, ExchangeOp,
 };
 
 use crate::{
@@ -15,12 +15,12 @@ impl TxHandler<Exchange> for ZkDposState {
 
     fn create_op(&self, tx: Exchange) -> Result<Self::Op, anyhow::Error> {
         ensure!(
-            tx.token <= params::max_token_id(),
-            "Token id is not supported"
+            tx.token_a <= params::max_token_id(),
+            "Token a id is not supported"
         );
         ensure!(
-            tx.to != Address::zero(),
-            "Exchange to Account with address 0 is not allowed"
+            tx.token_b <= params::max_token_id(),
+            "Token b id is not supported"
         );
         let (from, from_account) = self
             .get_account_by_address(&tx.from)
@@ -85,27 +85,27 @@ impl ZkDposState {
         let mut from_account = self.get_account(op.from).unwrap();
         let mut to_account = self.get_account(op.to).unwrap();
 
-        let from_old_balance = from_account.get_balance(op.tx.token);
+        let from_old_balance = from_account.get_balance(op.tx.token_a);
         let from_old_nonce = from_account.nonce;
 
         ensure!(op.tx.nonce == from_old_nonce, "Nonce mismatch");
         ensure!(
-            from_old_balance >= &op.tx.amount + &op.tx.fee,
+            from_old_balance >= &op.tx.amount_a + &op.tx.fee,
             "Not enough balance"
         );
 
-        from_account.sub_balance(op.tx.token, &(&op.tx.amount + &op.tx.fee));
+        from_account.sub_balance(op.tx.token_a, &(&op.tx.amount_a + &op.tx.fee));
         *from_account.nonce += 1;
 
-        let from_new_balance = from_account.get_balance(op.tx.token);
+        let from_new_balance = from_account.get_balance(op.tx.token_a);
         let from_new_nonce = from_account.nonce;
 
-        let to_old_balance = to_account.get_balance(op.tx.token);
+        let to_old_balance = to_account.get_balance(op.tx.token_a);
         let to_account_nonce = to_account.nonce;
 
-        to_account.add_balance(op.tx.token, &op.tx.amount);
+        to_account.add_balance(op.tx.token_a, &op.tx.amount_a);
 
-        let to_new_balance = to_account.get_balance(op.tx.token);
+        let to_new_balance = to_account.get_balance(op.tx.token_a);
 
         self.insert_account(op.from, from_account);
         self.insert_account(op.to, to_account);
@@ -113,7 +113,7 @@ impl ZkDposState {
         updates.push((
             op.from,
             AccountUpdate::UpdateBalance {
-                balance_update: (op.tx.token, from_old_balance, from_new_balance),
+                balance_update: (op.tx.token_a, from_old_balance, from_new_balance),
                 old_nonce: from_old_nonce,
                 new_nonce: from_new_nonce,
             },
@@ -122,14 +122,14 @@ impl ZkDposState {
         updates.push((
             op.to,
             AccountUpdate::UpdateBalance {
-                balance_update: (op.tx.token, to_old_balance, to_new_balance),
+                balance_update: (op.tx.token_a, to_old_balance, to_new_balance),
                 old_nonce: to_account_nonce,
                 new_nonce: to_account_nonce,
             },
         ));
 
         let fee = CollectedFee {
-            token: op.tx.token,
+            token: op.tx.token_a,
             amount: op.tx.fee.clone(),
         };
 

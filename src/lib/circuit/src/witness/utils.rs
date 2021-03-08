@@ -732,7 +732,7 @@ pub fn build_block_witness<'a>(
 
                 operations.extend(exchange_operations);
                 fees.push(CollectedFee {
-                    token: exchange.tx.token,
+                    token: exchange.tx.token_a,
                     amount: exchange.tx.fee,
                 });
                 pub_data.extend(exchange_witness.get_pubdata());
