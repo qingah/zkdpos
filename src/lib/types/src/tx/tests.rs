@@ -178,66 +178,66 @@ fn test_musig_rescue_signing_verification() {
     }
 }
 
-#[test]
-fn test_alaya_signature_verify_with_serialization() {
-    let address: Address = "52312AD6f01657413b2eaE9287f6B9ADaD93D5FE".parse().unwrap();
-    let message = "hello world";
-    #[derive(Debug, Serialize, Deserialize, PartialEq)]
-    struct TestSignatureSerialize {
-        signature: PackedAtpSignature,
-    }
+// #[test]
+// fn test_alaya_signature_verify_with_serialization() {
+//     let address: Address = "52312AD6f01657413b2eaE9287f6B9ADaD93D5FE".parse().unwrap();
+//     let message = "hello world";
+//     #[derive(Debug, Serialize, Deserialize, PartialEq)]
+//     struct TestSignatureSerialize {
+//         signature: PackedAtpSignature,
+//     }
 
-    // signature calculated using ethers.js signer
-    let test_signature_serialize = "{ \"signature\": \"0x111ea2824732851dd0893eaa5873597ba38ed08b69f6d8a0d7f5da810335566403d05281b1f56d12ca653e32eb7d67b76814b0cc8b0da2d7ad2c862d575329951b\"}";
+//     // signature calculated using ethers.js signer
+//     let test_signature_serialize = "{ \"signature\": \"0x111ea2824732851dd0893eaa5873597ba38ed08b69f6d8a0d7f5da810335566403d05281b1f56d12ca653e32eb7d67b76814b0cc8b0da2d7ad2c862d575329951b\"}";
 
-    // test serialization
-    let deserialized_signature: TestSignatureSerialize =
-        serde_json::from_str(test_signature_serialize).expect("signature deserialize");
-    let signature_after_roundtrip: TestSignatureSerialize = serde_json::from_str(
-        &serde_json::to_string(&deserialized_signature).expect("signature serialize roundtrip"),
-    )
-    .expect("signature deserialize roundtrip");
-    assert_eq!(
-        deserialized_signature, signature_after_roundtrip,
-        "signature serialize-deserialize roundtrip"
-    );
+//     // test serialization
+//     let deserialized_signature: TestSignatureSerialize =
+//         serde_json::from_str(test_signature_serialize).expect("signature deserialize");
+//     let signature_after_roundtrip: TestSignatureSerialize = serde_json::from_str(
+//         &serde_json::to_string(&deserialized_signature).expect("signature serialize roundtrip"),
+//     )
+//     .expect("signature deserialize roundtrip");
+//     assert_eq!(
+//         deserialized_signature, signature_after_roundtrip,
+//         "signature serialize-deserialize roundtrip"
+//     );
 
-    let recovered_address = deserialized_signature
-        .signature
-        .signature_recover_signer(&message.as_bytes())
-        .expect("signature verification");
+//     let recovered_address = deserialized_signature
+//         .signature
+//         .signature_recover_signer(&message.as_bytes())
+//         .expect("signature verification");
 
-    assert_eq!(address, recovered_address, "recovered address mismatch");
-}
+//     assert_eq!(address, recovered_address, "recovered address mismatch");
+// }
 
-#[test]
-fn test_alaya_signature_verify_examples() {
-    // signatures created using geth
-    // e.g. in geth console: eth.sign(eth.accounts[0], "0x")
-    let examples = vec![
-        ("0x8a91dc2d28b689474298d91899f0c1baf62cb85b", "0xdead", "0x13c34c76ffb42d97da67ddc5d275e92d758d1b48b5ee4b3bacd800cbeec3baff043a5ee63fea55485e1ee5d6f8b088daabd095f2ebbdc80a33806528b44bfccc1c"),
-        // empty message
-        ("0x8a91dc2d28b689474298d91899f0c1baf62cb85b", "0x", "0xd98f51c2ee0fd589e421348002dffec5d1b38e5bef9a41a699030456dc39298d12698158dc2a814b5f9ac6d433009dec87484a4579107be3f8f33907e92938291b"),
-        // this example has v = 28, unlike others
-        ("0x8a91dc2d28b689474298d91899f0c1baf62cb85b", "0x14", "0xd288b623af654c9d805e132812edf09ce244040376ca49112e91d437ecceed7c518690d4ae14149cd533f1ca4f081e6d2252c980fccc63de4d6bb818f1b668921c"),
-        // same as first, but v is just recovery id
-        ("0x8a91dc2d28b689474298d91899f0c1baf62cb85b", "0xdead", "0x13c34c76ffb42d97da67ddc5d275e92d758d1b48b5ee4b3bacd800cbeec3baff043a5ee63fea55485e1ee5d6f8b088daabd095f2ebbdc80a33806528b44bfccc01"),
-    ];
+// #[test]
+// fn test_alaya_signature_verify_examples() {
+//     // signatures created using geth
+//     // e.g. in geth console: eth.sign(eth.accounts[0], "0x")
+//     let examples = vec![
+//         ("0x8a91dc2d28b689474298d91899f0c1baf62cb85b", "0xdead", "0x13c34c76ffb42d97da67ddc5d275e92d758d1b48b5ee4b3bacd800cbeec3baff043a5ee63fea55485e1ee5d6f8b088daabd095f2ebbdc80a33806528b44bfccc1c"),
+//         // empty message
+//         ("0x8a91dc2d28b689474298d91899f0c1baf62cb85b", "0x", "0xd98f51c2ee0fd589e421348002dffec5d1b38e5bef9a41a699030456dc39298d12698158dc2a814b5f9ac6d433009dec87484a4579107be3f8f33907e92938291b"),
+//         // this example has v = 28, unlike others
+//         ("0x8a91dc2d28b689474298d91899f0c1baf62cb85b", "0x14", "0xd288b623af654c9d805e132812edf09ce244040376ca49112e91d437ecceed7c518690d4ae14149cd533f1ca4f081e6d2252c980fccc63de4d6bb818f1b668921c"),
+//         // same as first, but v is just recovery id
+//         ("0x8a91dc2d28b689474298d91899f0c1baf62cb85b", "0xdead", "0x13c34c76ffb42d97da67ddc5d275e92d758d1b48b5ee4b3bacd800cbeec3baff043a5ee63fea55485e1ee5d6f8b088daabd095f2ebbdc80a33806528b44bfccc01"),
+//     ];
 
-    for (address, msg, signature) in examples {
-        println!("addr: {}, msg: {}, sign: {}", address, msg, signature);
-        let address = address[2..].parse::<Address>().unwrap();
-        let msg = hex::decode(&msg[2..]).unwrap();
+//     for (address, msg, signature) in examples {
+//         println!("addr: {}, msg: {}, sign: {}", address, msg, signature);
+//         let address = address[2..].parse::<Address>().unwrap();
+//         let msg = hex::decode(&msg[2..]).unwrap();
 
-        let signature =
-            PackedAtpSignature::deserialize_packed(&hex::decode(&signature[2..]).unwrap())
-                .expect("signature deserialize");
-        let signer_address = signature
-            .signature_recover_signer(&msg)
-            .expect("signature verification");
-        assert_eq!(address, signer_address, "signer address mismatch");
-    }
-}
+//         let signature =
+//             PackedAtpSignature::deserialize_packed(&hex::decode(&signature[2..]).unwrap())
+//                 .expect("signature deserialize");
+//         let signer_address = signature
+//             .signature_recover_signer(&msg)
+//             .expect("signature verification");
+//         assert_eq!(address, signer_address, "signer address mismatch");
+//     }
+// }
 
 // #[test]
 // fn test_alaya_signature_sign() {
