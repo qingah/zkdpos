@@ -239,76 +239,76 @@ fn test_alaya_signature_verify_examples() {
     }
 }
 
-#[test]
-fn test_alaya_signature_sign() {
-    // data generated with `ethers.js`
-    let private_key = "0b43c0f5b5a13a7047408d1f8c8ad32ba5879902ea6212184e0a5d1157281d76"
-        .parse()
-        .unwrap();
+// #[test]
+// fn test_alaya_signature_sign() {
+//     // data generated with `ethers.js`
+//     let private_key = "0b43c0f5b5a13a7047408d1f8c8ad32ba5879902ea6212184e0a5d1157281d76"
+//         .parse()
+//         .unwrap();
 
-    let examples = vec![
-        (b"hello world".to_vec(), "12c24491eefbac7e80f4d3f0400cd804667dab026fda1bc8bfe86650d872ba4215b0a0e297c48a54d9020daa3130222dadcb8f5ffdafc4b9293c3ef818b322b01c"),
-        // empty message
-        (Vec::new(), "8b7385c7bb8913b9fd176247efab0ccc72e3197abe8e2d4c6596ba58a32a91675f66e80560a5f1a42bd50d58da055630ac6c18875e5ba14a362e87e903f083941c"),
-        // v = 27(others v = 28)
-        (vec![0x12, 0x32, 0x12, 0x42], "463d955775a407eadfdb22437d53df42460977bf1c02cf830b579b6bd0000ff366e819af75fb7140e8797d56580acfcac0ad3567bbdeca118a5f5d37f09753f11b")
-    ];
-    for (msg, correct_signature) in examples {
-        println!("message: 0x{}", hex::encode(&msg));
-        let correct_signature = hex::decode(correct_signature).unwrap();
-        let signature = PackedAtpSignature::sign(&private_key, &msg)
-            .expect("sign verify")
-            .serialize_packed()
-            .to_vec();
-        assert_eq!(signature, correct_signature, "signature is incorrect");
-    }
-}
+//     let examples = vec![
+//         (b"hello world".to_vec(), "12c24491eefbac7e80f4d3f0400cd804667dab026fda1bc8bfe86650d872ba4215b0a0e297c48a54d9020daa3130222dadcb8f5ffdafc4b9293c3ef818b322b01c"),
+//         // empty message
+//         (Vec::new(), "8b7385c7bb8913b9fd176247efab0ccc72e3197abe8e2d4c6596ba58a32a91675f66e80560a5f1a42bd50d58da055630ac6c18875e5ba14a362e87e903f083941c"),
+//         // v = 27(others v = 28)
+//         (vec![0x12, 0x32, 0x12, 0x42], "463d955775a407eadfdb22437d53df42460977bf1c02cf830b579b6bd0000ff366e819af75fb7140e8797d56580acfcac0ad3567bbdeca118a5f5d37f09753f11b")
+//     ];
+//     for (msg, correct_signature) in examples {
+//         println!("message: 0x{}", hex::encode(&msg));
+//         let correct_signature = hex::decode(correct_signature).unwrap();
+//         let signature = PackedAtpSignature::sign(&private_key, &msg)
+//             .expect("sign verify")
+//             .serialize_packed()
+//             .to_vec();
+//         assert_eq!(signature, correct_signature, "signature is incorrect");
+//     }
+// }
 
-/// Checks that we are able to decode old entries from the database.
-#[test]
-fn atp_sign_data_compatibility() {
-    // Messages were stored as strings rather than byte vectors.
-    #[derive(Clone, Serialize)]
-    struct OldAtpSignData {
-        pub signature: TxAtpSignature,
-        pub message: String,
-    }
-    // Generate dummy signature.
-    let private_key = "0b43c0f5b5a13a7047408d1f8c8ad32ba5879902ea6212184e0a5d1157281d76"
-        .parse()
-        .unwrap();
-    let message = "Sample text".to_owned();
-    let signature = TxAtpSignature::AlayaSignature(
-        PackedAtpSignature::sign(&private_key, message.as_bytes()).unwrap(),
-    );
+// /// Checks that we are able to decode old entries from the database.
+// #[test]
+// fn atp_sign_data_compatibility() {
+//     // Messages were stored as strings rather than byte vectors.
+//     #[derive(Clone, Serialize)]
+//     struct OldAtpSignData {
+//         pub signature: TxAtpSignature,
+//         pub message: String,
+//     }
+//     // Generate dummy signature.
+//     let private_key = "0b43c0f5b5a13a7047408d1f8c8ad32ba5879902ea6212184e0a5d1157281d76"
+//         .parse()
+//         .unwrap();
+//     let message = "Sample text".to_owned();
+//     let signature = TxAtpSignature::AlayaSignature(
+//         PackedAtpSignature::sign(&private_key, message.as_bytes()).unwrap(),
+//     );
 
-    let old_atp_sign_data = OldAtpSignData { signature, message };
-    let value = serde_json::to_value(old_atp_sign_data.clone()).unwrap();
+//     let old_atp_sign_data = OldAtpSignData { signature, message };
+//     let value = serde_json::to_value(old_atp_sign_data.clone()).unwrap();
 
-    let atp_sign_data: AtpSignData =
-        serde_json::from_value(value).expect("failed to decode old message format");
+//     let atp_sign_data: AtpSignData =
+//         serde_json::from_value(value).expect("failed to decode old message format");
 
-    assert_eq!(old_atp_sign_data.signature, atp_sign_data.signature);
-    assert_eq!(
-        old_atp_sign_data.message.as_bytes(),
-        atp_sign_data.message.as_slice()
-    );
-    // We are able to encode/decode messages in new format.
-    let value = serde_json::to_value(atp_sign_data.clone()).unwrap();
-    let deserialized: AtpSignData =
-        serde_json::from_value(value).expect("failed to decode AtpSignData");
+//     assert_eq!(old_atp_sign_data.signature, atp_sign_data.signature);
+//     assert_eq!(
+//         old_atp_sign_data.message.as_bytes(),
+//         atp_sign_data.message.as_slice()
+//     );
+//     // We are able to encode/decode messages in new format.
+//     let value = serde_json::to_value(atp_sign_data.clone()).unwrap();
+//     let deserialized: AtpSignData =
+//         serde_json::from_value(value).expect("failed to decode AtpSignData");
 
-    assert_eq!(deserialized.signature, atp_sign_data.signature);
-    assert_eq!(deserialized.message, atp_sign_data.message);
-}
+//     assert_eq!(deserialized.signature, atp_sign_data.signature);
+//     assert_eq!(deserialized.message, atp_sign_data.message);
+// }
 
-#[test]
-fn test_check_signature() {
-    let (pk, msg) = gen_pk_and_msg();
-    let signature = TxSignature::sign_musig(&pk, &msg[1])
-        .signature
-        .serialize_packed()
-        .unwrap();
+// #[test]
+// fn test_check_signature() {
+//     let (pk, msg) = gen_pk_and_msg();
+//     let signature = TxSignature::sign_musig(&pk, &msg[1])
+//         .signature
+//         .serialize_packed()
+//         .unwrap();
 
-    assert_eq!(hex::encode(signature), "4e3298ac8cc13868dbbc94ad6fb41085ffe05b3c2eee22f88b05e69b7a5126aea723d7a3e7282ef5a32d9479c9c8dde52b3e3c462dd445dcd8158ebb6edb6000");
-}
+//     assert_eq!(hex::encode(signature), "4e3298ac8cc13868dbbc94ad6fb41085ffe05b3c2eee22f88b05e69b7a5126aea723d7a3e7282ef5a32d9479c9c8dde52b3e3c462dd445dcd8158ebb6edb6000");
+// }
