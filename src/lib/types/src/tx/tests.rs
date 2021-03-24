@@ -8,7 +8,7 @@ use zkdpos_crypto::public_key_from_private;
 use zkdpos_crypto::rand::{Rng, SeedableRng, XorShiftRng};
 
 use num::{BigUint, ToPrimitive};
-use serde::{Deserialize, Serialize};
+// use serde::{Deserialize, Serialize};
 
 use super::*;
 use crate::{
